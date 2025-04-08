@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛博图书智能搜索系统</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+        
+        :root {
+            --neon-pink: #ff2a6d;
+            --neon-blue: #05d9e8;
+            --neon-purple: #d300c5;
+            --neon-cyan: #00f1ff;
+            --dark-bg: #0d0221;
+        }
+        
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: var(--dark-bg);
+            color: white;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 42, 109, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(5, 217, 232, 0.1) 0%, transparent 20%);
+            animation: bgPulse 15s infinite alternate;
+        }
+        
+        @keyframes bgPulse {
+            0% { background-color: #0d0221; }
+            50% { background-color: #1a0438; }
+            100% { background-color: #0d0221; }
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background: rgba(13, 2, 33, 0.7);
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(5, 217, 232, 0.3);
+            border: 1px solid var(--neon-blue);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-blue), var(--neon-purple), var(--neon-cyan));
+            background-size: 400%;
+            z-index: -1;
+            border-radius: 10px;
+            animation: borderGlow 8s linear infinite;
+            filter: blur(5px);
+            opacity: 0.7;
+        }
+        
+        @keyframes borderGlow {
+            0% { background-position: 0 0; }
+            50% { background-position: 400% 0; }
+            100% { background-position: 0 0; }
+        }
+        
+        h1 {
+            color: var(--neon-cyan);
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue);
+            font-weight: 700;
+            letter-spacing: 2px;
+            animation: textGlow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes textGlow {
+            from { text-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue); }
+            to { text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue), 0 0 30px var(--neon-purple); }
+        }
+        
+        .search-box {
+            display: flex;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        #search-input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-bottom: 2px solid var(--neon-pink);
+            font-family: 'Orbitron', sans-serif;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        #search-input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-bottom: 2px solid var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(5, 217, 232, 0.5);
+        }
+        
+        #search-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        #search-btn {
+            padding: 0 25px;
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-purple));
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #search-btn:hover {
+            background: linear-gradient(45deg, var(--neon-purple), var(--neon-pink));
+            box-shadow: 0 0 15px var(--neon-pink);
+        }
+        
+        #search-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+        
+        #search-btn:hover::before {
+            left: 100%;
+        }
+        
+        .search-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            transition: all 0.3s;
+        }
+        
+        #search-btn.clicked .search-icon {
+            transform: scale(1.5);
+        }
+        
+        .results-container {
+            margin-top: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--neon-blue) var(--dark-bg);
+        }
+        
+        .results-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .results-container::-webkit-scrollbar-track {
+            background: var(--dark-bg);
+        }
+        
+        .results-container::-webkit-scrollbar-thumb {
+            background-color: var(--neon-blue);
+            border-radius: 4px;
+        }
+        
+        .book-item {
+            padding: 20px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 3px solid var(--neon-pink);
+            border-radius: 4px;
+            transition: all 0.3s;
+            animation: fadeIn 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .book-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+            box-shadow: 0 0 15px rgba(255, 42, 109, 0.3);
+        }
+        
+        .book-item h3 {
+            margin-top: 0;
+            color: var(--neon-cyan);
+            font-weight: 700;
+        }
+        
+        .book-meta {
+            color: rgba(255, 255, 255, 0.7);
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .location {
+            color: var(--neon-blue);
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        
+        .location-icon {
+            margin-right: 5px;
+            color: var(--neon-pink);
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 18px;
+        }
+        
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(0deg, transparent, rgba(5, 217, 232, 0.1), transparent);
+            animation: scan 8s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes scan {
+            0% { top: -100%; }
+            100% { top: 100%; }
+        }
+        
+        .binary-rain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+        
+        .binary-digit {
+            position: absolute;
+            color: var(--neon-cyan);
+            font-size: 16px;
+            animation: fall linear infinite;
+        }
+        
+        @keyframes fall {
+            to { transform: translateY(100vh); }
+        }
+    </style>
+</head>
+<body>
+    <div class="binary-rain" id="binaryRain"></div>
+    
+    <div class="container">
+        <div class="scan-line"></div>
+        
+        <h1>赛博图书智能搜索系统</h1>
+        
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="请输入关键词(exit退出)...">
+            <button id="search-btn">
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                搜索
+            </button>
+        </div>
+        
+        <div class="results-container" id="results-container">
+            <div class="welcome-message">
+                <p style="text-align: center; color: var(--neon-blue);">欢迎使用赛博图书智能搜索系统</p >
+                <p style="text-align: center; color: rgba(255, 255, 255, 0.7);">输入关键词搜索图书</p >
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 创建二进制雨效果
+        function createBinaryRain() {
+            const container = document.getElementById('binaryRain');
+            const digits = '01';
+            const count = 50;
+            
+            for (let i = 0; i < count; i++) {
+                const digit = document.createElement('div');
+                digit.className = 'binary-digit';
+                digit.textContent = digits.charAt(Math.floor(Math.random() * digits.length));
+                digit.style.left = `${Math.random() * 100}%`;
+                digit.style.animationDuration = `${5 + Math.random() * 10}s`;
+                digit.style.animationDelay = `${Math.random() * 5}s`;
+                digit.style.opacity = Math.random();
+                container.appendChild(digit);
+            }
+        }
+        
+        createBinaryRain();
+        
+        // 搜索功能
+        document.getElementById('search-btn').addEventListener('click', performSearch);
+        document.getElementById('search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+        
+        function performSearch() {
+            const btn = document.getElementById('search-btn');
+            const icon = btn.querySelector('.search-icon');
+            
+            // 添加点击动画
+            btn.classList.add('clicked');
+            setTimeout(() => {
+                btn.classList.remove('clicked');
+            }, 300);
+            
+            const query = document.getElementById('search-input').value.trim();
+            
+            if (query.toLowerCase() === 'exit') {
+                showNeonAlert('感谢使用，再见！');
+                return;
+            }
+            
+            if (!query) {
+                showNeonAlert('请输入搜索关键词');
+                return;
+            }
+            
+            // 模拟加载效果
+            const container = document.getElementById('results-container');
+            container.innerHTML = `
+                <div style="text-align: center; padding: 30px;">
+                    <div style="display: inline-block; width: 50px; height: 50px; border: 3px solid var(--neon-pink); border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite;"></div>
+                    <p style="margin-top: 15px; color: var(--neon-blue);">搜索中...</p >
+                </div>
+            `;
+            
+            // 这里应该是AJAX请求后端API
+            // 为了演示，我们使用模拟数据
+            setTimeout(() => {
+                const mockResults = getMockResults(query);
+                displayResults(mockResults);
+            }, 800);
+        }
+        
+        function getMockResults(query) {
+            // 模拟数据库查询结果
+            const allBooks = [
+                { title: '数据库设计基础', location: '二楼B区第一层' },
+                { title: '趣味数学故事', location: '一楼C区第五层' },
+                { title: 'Java编程思想', location: '三楼A区第三层' },
+                { title: 'Python数据分析', location: '二楼D区第二层' },
+                { title: '赛博朋克2077艺术设定集', location: '四楼E区第七层' },
+                { title: '神经漫游者', location: '三楼F区第二层' },
+                { title: '银翼杀手', location: '一楼G区第三层' }
+            ];
+            
+            return allBooks.filter(book => 
+                book.title.includes(query)
+            );
+        }
+        
+        function displayResults(books) {
+            const container = document.getElementById('results-container');
+            
+            if (books.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--neon-pink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <p>没有找到匹配的图书</p >
+                        <p>请尝试其他关键词</p >
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div class="search-summary" style="color: var(--neon-blue); margin-bottom: 20px; text-align: center;">
+                    找到的书籍：<span style="color: var(--neon-pink); font-weight: bold;">${books.length}</span>本
+                </div>
+            `;
+            
+            books.forEach((book, index) => {
+                html += `
+                    <div class="book-item" style="animation-delay: ${index * 0.1}s">
+                        <h3>${book.title}</h3>
+                        <div class="book-meta">
+                            <span class="location-icon">📍</span>
+                            位置：<span class="location">${book.location}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function showNeonAlert(message) {
+            const alertBox = document.createElement('div');
+            alertBox.style.position = 'fixed';
+            alertBox.style.top = '20px';
+            alertBox.style.left = '50%';
+            alertBox.style.transform = 'translateX(-50%)';
+            alertBox.style.padding = '15px 30px';
+            alertBox.style.background = 'rgba(13, 2, 33, 0.9)';
+            alertBox.style.border = '1px solid var(--neon-pink)';
+            alertBox.style.borderRadius = '4px';
+            alertBox.style.color = 'var(--neon-cyan)';
+            alertBox.style.boxShadow = '0 0 15px var(--neon-pink)';
+            alertBox.style.zIndex = '1000';
+            alertBox.style.animation = 'fadeIn 0.3s';
+            alertBox.textContent = message;
+            
+            document.body.appendChild(alertBox);
+            
+            setTimeout(() => {
+                alertBox.style.animation = 'fadeOut 0.5s';
+                setTimeout(() => {
+                    document.body.removeChild(alertBox);
+                }, 500);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
